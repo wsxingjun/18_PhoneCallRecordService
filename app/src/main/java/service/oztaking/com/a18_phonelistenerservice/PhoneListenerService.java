@@ -3,12 +3,16 @@ package service.oztaking.com.a18_phonelistenerservice;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.media.MediaRecorder;
 import android.os.IBinder;
+import android.provider.MediaStore;
+import android.provider.MediaStore.Audio;
 import android.support.annotation.Nullable;
 import android.telephony.CellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+
 
 import java.util.List;
 
@@ -17,6 +21,9 @@ import java.util.List;
  */
 
 public class PhoneListenerService extends Service {
+
+    private MediaRecorder mRecorder;
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -46,12 +53,30 @@ public class PhoneListenerService extends Service {
             //判断电话的状态
             switch (state){
                 case TelephonyManager.CALL_STATE_IDLE:
+                    if (mRecorder != null){
+                        Log.d("System","录音机空闲中..........");
+                        mRecorder.stop();
+                        mRecorder.release();
+                        mRecorder.reset();
+                    }
                     break;
                 case TelephonyManager.CALL_STATE_OFFHOOK:
                     Log.d("System","开始录...........");
+                    mRecorder.start();
+
                     break;
                 case TelephonyManager.CALL_STATE_RINGING:
                     Log.d("System","准备一个收音机出来");
+                    mRecorder = new MediaRecorder();
+                    mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+                    mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+                    mRecorder.setOutputFile("/mnt/sdcard/luyin.3gp");
+                    mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+                    try {
+                        mRecorder.prepare();
+                    } catch (Exception e) {
+                        Log.e("System", "准备收音机失败");
+                    }
                     break;
                 default:
                     break;
@@ -65,4 +90,5 @@ public class PhoneListenerService extends Service {
         super.onDestroy();
 
     }
+
 }
